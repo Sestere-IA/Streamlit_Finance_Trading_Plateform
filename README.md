@@ -3,6 +3,10 @@
 Ce projet consiste à créer un outil d’aide à la décision financier dans le cadre
 d’investissement boursier. Nous disposons d’une source de données issue du site Yahoo finance.
 
+## Deployement
+
+Heroku : https://dashboard.heroku.com/apps/traiding-plateform
+
 ## Appendix
 
 Il s’agit ici de créer une plateforme de trading basé sur des données récoltées sur le site
