@@ -5,7 +5,7 @@ d’investissement boursier. Nous disposons d’une source de données issue du 
 
 ## Deployement
 
-Heroku : https://dashboard.heroku.com/apps/traiding-plateform
+Heroku : https://traiding-plateform.herokuapp.com/
 
 ## Appendix
 
