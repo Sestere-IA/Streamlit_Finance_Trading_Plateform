@@ -6,8 +6,6 @@ from datetime import date, datetime, timedelta
 from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
-import random
-from pages import connection, create_users
 
 
 def load_data(tiker, date_start_cotation, date_end_cotation, display_columns=False, columns=False):

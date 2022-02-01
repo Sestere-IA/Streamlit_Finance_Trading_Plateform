@@ -1,15 +1,9 @@
-import pandas as pd
-import pandas_datareader.data as web
-import numpy as np
-import matplotlib.pyplot as plt
 import streamlit as st
-import sqlite3
 from database import bdd_setting
 from datetime import date
 import os
 import hashlib
-import time
-from pages import homepage
+
 
 
 def app():

@@ -1,9 +1,7 @@
 import streamlit as st
-from database import bdd_setting
 import hashlib
-from pages import homepage
 from database import bdd_setting
-import pandas as pd
+
 
 
 def app():
