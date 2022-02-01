@@ -135,5 +135,5 @@ If you have any feedback, please reach out to us at alexandre.nabyt75@gmail.com
 - Add possibility to do multiple actions
 - Add Courbe de tendance
 - Add moyenne mobile des multiples cours
-
+- Add progress bar for prediction
 
