@@ -1,3 +1,4 @@
+"""Page d'affichage des actions utilisateurs"""
 import streamlit as st
 from database import bdd_setting
 import pandas as pd

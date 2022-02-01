@@ -1,3 +1,5 @@
+""" Gestion de tout les elements lié à la base de données
+"""
 import sqlite3
 import sys
 
@@ -16,7 +18,7 @@ def test_con():
 
 
 def create_table_users():
-    """ Créer la table des items à vendre
+    """ Créer la table des utilisateurs
     Utilise un fichier.sql pour faire cela"""
 
     con = sqlite3.connect("database/plateformeTraiding.db")
@@ -73,14 +75,19 @@ def insert_client_in_bdd(username, password,
                          capital, is_admin, name,
                          surname, date_creation):
     """
-    Insérer un nouveau client dans la base de donnée
+    Insérer un nouveau user dans la base de donnée
     :param username:
-    :param capital:
-    :param is_admin:
-    :param name:
-    :param surname:
-    :param date_creation:
     String
+    :param capital:
+    Int
+    :param is_admin:
+    Bool
+    :param name:
+    String
+    :param surname:
+    String
+    :param date_creation:
+    Date
         L'identifiant du client
     :param password:
     String
@@ -102,7 +109,7 @@ def insert_client_in_bdd(username, password,
 
 def check_identifiant_exist():
     """
-    Voir les différents identiant client dans la table client
+    Voir les différents identifiant client dans la table client
     :return
     String
         Le resultat de la requête
@@ -129,7 +136,7 @@ def check_identififiant_password():
 
 
 def create_table_actions_user():
-    """ Créer la table des items à vendre
+    """ Créer la table des actions user
     Utilise un fichier.sql pour faire cela"""
 
     con = sqlite3.connect("database/plateformeTraiding.db")
@@ -144,6 +151,7 @@ def create_table_actions_user():
 
 def put_action_on_db(username, date, choice, quantity,
                      transaction, multiple_buy, ticker, last_close):
+    """ Ajouter l'action user à la bdd"""
     try:
         create_table_actions_user()
     except:
@@ -164,7 +172,7 @@ def put_action_on_db(username, date, choice, quantity,
 
 
 def see_bdd_actions():
-    """ Afficher la base de donnée
+    """ Afficher l'action de la base de donnée
     Le résultat peut être print en interne pour visualisé la table
 
     :return
@@ -184,7 +192,7 @@ def see_bdd_actions():
 
 
 def see_bdd_of_specific_user(username):
-    """ Afficher la base de donnée
+    """ Afficher un users specific
     Le résultat peut être print en interne pour visualisé la table
 
     :return
@@ -201,9 +209,31 @@ def see_bdd_of_specific_user(username):
 
 
 def add_money_for_user(username, money: int):
+    """Add money for user
+    :param username:
+    String
+    :param money
+    Int
+    """
     con = sqlite3.connect("database/plateformeTraiding.db")
     cur = con.cursor()
     cur.execute("update client_table set client_capital=client_capital + ?"
+                " where client_username=?",
+                (money, username))
+    con.commit()
+    con.close()
+
+
+def remove_money_from_user_after_validate_action(username, money: int):
+    """Remove money to user
+    :param username:
+    String
+    :param money
+    Int
+    """
+    con = sqlite3.connect("database/plateformeTraiding.db")
+    cur = con.cursor()
+    cur.execute("update client_table set client_capital=client_capital - ?"
                 " where client_username=?",
                 (money, username))
     con.commit()

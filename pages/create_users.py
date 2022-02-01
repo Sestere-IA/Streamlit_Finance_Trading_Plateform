@@ -1,9 +1,9 @@
+"""Page de creation d'utilisateur"""
 import streamlit as st
 from database import bdd_setting
 from datetime import date
 import os
 import hashlib
-
 
 
 def app():
@@ -49,4 +49,3 @@ def app():
         if st.button("Se déconnecter"):
             del st.session_state['pseudo']
             st.success("Vous ête maintenant déconnecté")
-

@@ -1,7 +1,7 @@
+"""Page de connection utilisateur"""
 import streamlit as st
 import hashlib
 from database import bdd_setting
-
 
 
 def app():

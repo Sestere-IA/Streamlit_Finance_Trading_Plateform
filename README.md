@@ -1,7 +1,7 @@
 # Plateforme de Trading
 
 Ce projet consiste à créer un outil d’aide à la décision financier dans le cadre
-d’investissement boursier. Nous disposons d’une source de donnée issue du site Yahoo finance.
+d’investissement boursier. Nous disposons d’une source de données issue du site Yahoo finance.
 
 ## Appendix
 
@@ -26,12 +26,12 @@ Yahoo Finance. Cette application devra comprendre ces trois blocs :
   
 Cette application devra être en mesure de sauvegarder les ordres passés précédemment.
 - Sauvegarde des utilisateurs dans une table SQL/fichier csv
-- Sauvegarde des actions sélectionnés, de la quantité associée ainsi que du capital restant
+- Sauvegarde des actions sélectionnées, de la quantité associée ainsi que du capital restant
 
 2. Passage de l’ordre
 - Saisie du Ticker
 - Saisie de la date de début de cotation
-- Saisie date la date de fin de cotation (Par défaut, il s’agira de la date du jour)
+- Saisie de la date de fin de cotation (Par défaut, il s’agira de la date du jour)
 - Ajout d’un radio bouton permettant d’ajouter un ou plusieurs cours (Cours unique –
 Multiple cours)
   
@@ -96,7 +96,7 @@ The result going to be enable in :
 
 #### Quel est le but du projet ?
 
-Nous voulons aider un novide à la prise décision financier dans le cadre d’investissement boursier
+Nous voulons aider un novice à la prise décision financier dans le cadre d’investissement boursier
 
 #### D'autres plateforme sont-il prévue ?
 
@@ -132,6 +132,8 @@ If you have any feedback, please reach out to us at alexandre.nabyt75@gmail.com
 
 ## Roadmap
 
-- Etape 1
+- Add possibility to do multiple actions
+- Add Courbe de tendance
+- Add moyenne mobile des multiples cours
 
 

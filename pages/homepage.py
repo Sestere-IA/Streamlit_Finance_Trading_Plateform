@@ -1,3 +1,4 @@
+"""Home page of app"""
 import streamlit as st
 import pandas_datareader.data as web
 import datetime
@@ -6,9 +7,11 @@ from datetime import date, datetime, timedelta
 from prophet import Prophet
 from prophet.plot import plot_plotly
 from plotly import graph_objs as go
+import pandas as pd
 
 
 def load_data(tiker, date_start_cotation, date_end_cotation, display_columns=False, columns=False):
+    """Able de load data to show in app"""
     data = web.DataReader(tiker, data_source="yahoo", start=date_start_cotation, end=date_end_cotation)
     if display_columns:
         if "," in str(columns):
@@ -22,6 +25,7 @@ def load_data(tiker, date_start_cotation, date_end_cotation, display_columns=Fal
 
 
 def load_data_for_prediction(ticker, data_start, data_end):
+    """specific data for prediction"""
     data = web.DataReader(ticker, data_source="yahoo", start=data_start, end=data_end)
     data.reset_index(inplace=True)
     return data
@@ -31,6 +35,7 @@ def app():
     st.session_state.select_columns = False
     st.session_state.add_cours = False
     st.session_state["display"] = False
+    data = pd.DataFrame()
     st.title("Plateforme de Trading")
     st.write("Cette application à pour but d'aider à la décision financier dans le cadre"
              "d'investissement boursier")
@@ -89,7 +94,8 @@ def app():
                     y_hat = np.poly1d(z)(x)
                     plt.plot(x, y_hat, "r--", lw=1)
                     ax.scatter(x,y)
-                    st.pyplot(fig)"""  # TODO
+                    st.pyplot(fig)"""  # TODO Courbe de tendance
+                    # TODO Moyenne mobile des multiples cours
 
                     print(column)
                     rendement = (data[column].tail(1).values - data[column].head(1).values) \
@@ -135,6 +141,7 @@ def app():
     if "pseudo" not in st.session_state:
         pass
     else:
+        ticker_for_action = ""
         st.title("Trading action")
         result = bdd_setting.see_bdd_of_specific_user(st.session_state["pseudo"])
         actual_capital = result[0][3]
@@ -146,26 +153,33 @@ def app():
             if st.button("Put asset"):
                 for i in range(number_of_asset):
                     st.text_input("Ticker " + str(i + 1), placeholder="Enter Ticker", key="input" + str(i))
+                    # TODO add possibility to do multiple actions
         else:
             ticker_for_action = st.text_input("Ticker", placeholder="Enter Ticker", key="unique_ticker_for_actor")
         action = st.selectbox("Do an action", ("Buy", "Sell"))
         quantity = st.number_input("For how much do you want to put", step=100, min_value=10)
         multiplier_lever = st.number_input("Multiplier Lever", step=1, min_value=1)
         if st.button("Valider mon action"):
-            today = date.today()
+            try:
+                today = date.today()
+                total_transaction = quantity * multiplier_lever
+                d = datetime.today() - timedelta(days=1)
+                today_for_data = datetime.today().strftime('%Y-%m-%d')
 
-            indicators = ["indicator1", "indicator2", "indicator3"]
-            total_transaction = quantity * multiplier_lever
-            d = datetime.today() - timedelta(days=1)
-            today_for_data = datetime.today().strftime('%Y-%m-%d')
+                data = load_data(ticker_for_action, d.strftime('%Y-%m-%d'), today_for_data)
+                adj_close = data["Adj Close"].tail(1)
+                bdd_setting.put_action_on_db(st.session_state['pseudo'],
+                                             today.strftime('%Y-%m-%d %H:%M:%S'),
+                                             action, quantity, total_transaction,
+                                             multiplier_lever, ticker_for_action, int(adj_close))
 
-            data = load_data(ticker_for_action, d.strftime('%Y-%m-%d'), today_for_data)
-            adj_close = data["Adj Close"].tail(1)
-            bdd_setting.put_action_on_db(st.session_state['pseudo'],
-                                         today.strftime('%Y-%m-%d %H:%M:%S'),
-                                         action, quantity, total_transaction,
-                                         multiplier_lever, ticker_for_action, int(adj_close))
-            st.info("Vous avez validé votre action, elle devrait appraraitre dans la liste des actions")
+                if actual_capital - quantity > 0:
+                    bdd_setting.remove_money_from_user_after_validate_action(st.session_state['pseudo'], quantity)
+                    st.info("Vous avez validé votre action, elle devrait appraraitre dans la liste des actions")
+                else:
+                    st.info("Vous n'avez pas assez d'argent sur votre compte pour valider cette action")
+            except:
+                st.error("Please select a Ticker")
 
     st.title('Prediction')
     n_month = st.radio('Month of prediction:', [6, 12])
