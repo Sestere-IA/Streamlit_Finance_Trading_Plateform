@@ -41,11 +41,10 @@ class MultiApp:
         })
 
     def run(self):
-        app = st.sidebar.selectbox(
+        app = st.sidebar.radio(
             'Navigation bar',
             self.apps,
-            format_func=lambda app: app['title']
-            if 'pseudo' not in st.session_state else app['title']) #TODO if pseudo in session dont show Connection
+            format_func=lambda app: app['title'])
 
         app['function']()
 

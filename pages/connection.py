@@ -1,6 +1,9 @@
 import streamlit as st
 from database import bdd_setting
 import hashlib
+from pages import homepage
+from database import bdd_setting
+import pandas as pd
 
 
 def app():
@@ -23,7 +26,6 @@ def app():
                 )
                 if user_username == username_password[0] and new_key == key_from_storage:
                     st.success("Vous ête maintenant connecté")
-                    st.info("Go to Login Menu to login")
 
                     if 'pseudo' not in st.session_state:
                         st.session_state["pseudo"] = user_username
@@ -33,7 +35,21 @@ def app():
     else:
         st.title("Bonjour " + st.session_state["pseudo"])
         st.write("Voici vos informations")
-        st.write("Blabla")
+        result = bdd_setting.see_bdd_of_specific_user(st.session_state["pseudo"])
+        username = result[0][1]
+        capital = result[0][3]
+        name = result[0][5]
+        surname = result[0][6]
+        data_creation_account = result[0][7]
+        st.write("Username : " + username)
+        st.write("Capital : " + str(capital))
+        st.write("Name : " + name)
+        st.write("Surname : " + surname)
+        st.write("Date of creation : " + str(data_creation_account))
+        cash = st.number_input("Do you want to add money ?", step=100, min_value=100)
+        if st.button("Add money"):
+            bdd_setting.add_money_for_user(st.session_state["pseudo"], int(cash))
+            st.experimental_rerun()
         if st.button("Se déconnecter"):
             del st.session_state['pseudo']
             st.success("Vous ête maintenant déconnecté")

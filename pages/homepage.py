@@ -2,19 +2,30 @@ import streamlit as st
 import pandas_datareader.data as web
 import datetime
 from database import bdd_setting
-from datetime import date
+from datetime import date, datetime, timedelta
+from prophet import Prophet
+from prophet.plot import plot_plotly
+from plotly import graph_objs as go
 import random
+from pages import connection, create_users
 
-def load_data(tiker, date_start_cotation, date_end_cotation, display_columns, columns):
-    apple_data = web.DataReader(tiker, data_source="yahoo", start=date_start_cotation, end=date_end_cotation)
+
+def load_data(tiker, date_start_cotation, date_end_cotation, display_columns=False, columns=False):
+    data = web.DataReader(tiker, data_source="yahoo", start=date_start_cotation, end=date_end_cotation)
     if display_columns:
         if "," in str(columns):
-            data = apple_data[columns]
+            data = data[columns]
         else:
             all_col = str(columns)[2:-2]
-            data = apple_data[all_col]
+            data = data[all_col]
     else:
-        data = apple_data
+        data = data
+    return data
+
+
+def load_data_for_prediction(ticker, data_start, data_end):
+    data = web.DataReader(ticker, data_source="yahoo", start=data_start, end=data_end)
+    data.reset_index(inplace=True)
     return data
 
 
@@ -32,7 +43,7 @@ def app():
         ticker = st.text_input("Ticker", placeholder="Enter Ticker", value=st.session_state["ticker"])
 
     if 'start_date' not in st.session_state:
-        date_start_cotation = st.date_input("Date start cotation", datetime.date(2012, 12, 21))
+        date_start_cotation = st.date_input("Date start cotation", date(2012, 12, 21))
     else:
         date_start_cotation = st.date_input("Date start cotation", st.session_state["start_date"])
 
@@ -41,14 +52,14 @@ def app():
     else:
         date_end_cotation = st.date_input("Date end cotation", st.session_state["end_date"])
 
-    display_choice = st.radio("Choose your display", ("Unique", "Multiple"))
+    display_choice = st.radio("Choose your display", ("All data", "Select columns"))
 
-    if display_choice == "Multiple":
+    if display_choice == "Select columns":
         add_cours = st.multiselect("", ("High", "Low", "Close", "Open", "Volume", "Adj Close"))
         st.session_state.add_cours = add_cours
         st.session_state.select_columns = True
 
-    elif display_choice == "Unique":
+    elif display_choice == "All data":
         st.session_state.select_columns = False
 
     if st.button("Display"):
@@ -60,15 +71,17 @@ def app():
             st.write(data)
             st.subheader('Visualisation')
             st.line_chart(data)
-
+            st.subheader('Statistics')
+            st.table(data.describe())
+            if not st.session_state.select_columns:
+                st.subheader('View previous closes')
+                st.write(data["Adj Close"].tail(10))
         except:
             st.error("Please, fill all components")
 
         try:
-            print(st.session_state.add_cours)
             if len(st.session_state.add_cours) > 1:
                 for column in st.session_state.add_cours:
-                    print(column)
                     """same_data_to_curve = data
                     x = same_data_to_curve[column]
                     same_data_to_curve.reset_index(level=0, inplace=True)
@@ -112,28 +125,100 @@ def app():
         st.write(st.session_state["data"])
         st.subheader('Visualisation')
         st.line_chart(st.session_state["data"])
+        st.subheader('Statistics')
+        st.table(st.session_state["data"].describe())
+        st.subheader('View previous closes')
+        try:
+            current_data = st.session_state["data"]
+            st.write(current_data["Adj Close"])
+        except:
+            pass
 
-    if 'pseudo' in st.session_state:
-        st.write("Do an action")
-        action = st.selectbox("Do an action", ("Action 1", "Action 2", "Action 3"))
+    if "pseudo" not in st.session_state:
+        pass
+    else:
+        st.title("Trading action")
+        result = bdd_setting.see_bdd_of_specific_user(st.session_state["pseudo"])
+        actual_capital = result[0][3]
+        st.write("Actual Capital : " + str(actual_capital))
+        select_order = st.radio("Select multi or simple order", ('Unique', 'Multiple'))
+
+        if select_order == "Multiple":
+            number_of_asset = st.slider("How many asset do you want ?", min_value=2, max_value=10)
+            if st.button("Put asset"):
+                for i in range(number_of_asset):
+                    st.text_input("Ticker " + str(i + 1), placeholder="Enter Ticker", key="input" + str(i))
+        else:
+            ticker_for_action = st.text_input("Ticker", placeholder="Enter Ticker", key="unique_ticker_for_actor")
+        action = st.selectbox("Do an action", ("Buy", "Sell"))
         quantity = st.number_input("For how much do you want to put", step=100, min_value=10)
+        multiplier_lever = st.number_input("Multiplier Lever", step=1, min_value=1)
         if st.button("Valider mon action"):
             today = date.today()
-            if action == "Action 1":
-                mutiplicator = 2
-            if action == "Action 2":
-                mutiplicator = 3
-            if action == "Action 3":
-                mutiplicator = 4
-            else:
-                mutiplicator = 1
 
             indicators = ["indicator1", "indicator2", "indicator3"]
-            total_transaction = quantity*mutiplicator
+            total_transaction = quantity * multiplier_lever
+            d = datetime.today() - timedelta(days=1)
+            today_for_data = datetime.today().strftime('%Y-%m-%d')
+
+            data = load_data(ticker_for_action, d.strftime('%Y-%m-%d'), today_for_data)
+            adj_close = data["Adj Close"].tail(1)
             bdd_setting.put_action_on_db(st.session_state['pseudo'],
                                          today.strftime('%Y-%m-%d %H:%M:%S'),
                                          action, quantity, total_transaction,
-                                         random.choice(indicators))
+                                         multiplier_lever, ticker_for_action, int(adj_close))
             st.info("Vous avez validé votre action, elle devrait appraraitre dans la liste des actions")
 
+    st.title('Prediction')
+    n_month = st.radio('Month of prediction:', [6, 12])
+    period = n_month * 31
+    if st.button("Do a prediction"):
+        prediction(ticker, n_month, period)
 
+
+def prediction(ticker, n_month, period):
+    start = "2017-01-01"
+    today = date.today().strftime("%Y-%m-%d")
+
+    data_load_state = st.text('Loading data for prediction since 2017 to today...')
+    try:
+        data = load_data_for_prediction(ticker, start, today)
+        data_load_state.text('Loading data for prediction since 2017 to today... done!')
+
+        st.subheader('Raw data')
+        st.write(data.tail())
+
+        plot_raw_data(data)
+
+        # Predict forecast with Prophet.
+        df_train = data[['Date', 'Close']]
+        # Use Prophet doc
+        df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
+        m = Prophet()
+        m.fit(df_train)
+        future = m.make_future_dataframe(periods=period)
+        forecast = m.predict(future)
+
+        # Show and plot forecast
+        st.subheader('Forecast data')
+        st.write(forecast.tail())
+
+        st.write(f'Forecast plot for {n_month} month')
+        fig1 = plot_plotly(m, forecast)
+        st.plotly_chart(fig1)
+
+        st.write("Forecast components")
+        fig2 = m.plot_components(forecast)
+        st.write(fig2)
+
+    except:
+        st.error("Please select a Ticker")
+
+
+# Plot raw data
+def plot_raw_data(data):
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name="stock_open"))
+    fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name="stock_close"))
+    fig.layout.update(title_text='Time Series data with Rangeslider', xaxis_rangeslider_visible=True)
+    st.plotly_chart(fig)

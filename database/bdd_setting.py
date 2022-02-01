@@ -64,7 +64,7 @@ def drop_specific_table():
     """
     con = sqlite3.connect("database/plateformeTraiding.db")
     cur = con.cursor()
-    cur.execute("DROP TABLE client_table")
+    cur.execute("DROP TABLE action_users_table")
     con.commit()
     con.close()
 
@@ -142,7 +142,8 @@ def create_table_actions_user():
     con.close()
 
 
-def put_action_on_db(username, date, choice, quantity, transaction, multiple_buy):
+def put_action_on_db(username, date, choice, quantity,
+                     transaction, multiple_buy, ticker, last_close):
     try:
         create_table_actions_user()
     except:
@@ -154,9 +155,10 @@ def put_action_on_db(username, date, choice, quantity, transaction, multiple_buy
         'insert into action_users_table'
         ' (action_users_client_username, action_users_date,'
         ' action_users_choice, action_users_quantity,'
-        ' action_users_total_value_transaction, action_users_multiple_buy) '
-        ' values (?, ?, ?, ?, ?, ?)', [username, date, choice, quantity,
-                                       transaction, multiple_buy])
+        ' action_users_total_value_transaction, action_users_multiple_buy,'
+        ' action_users_ticker, action_users_last_close) '
+        ' values (?, ?, ?, ?, ?, ?, ?, ?)', [username, date, choice, quantity,
+                                             transaction, multiple_buy, ticker, last_close])
     con.commit()
     con.close()
 
@@ -179,3 +181,30 @@ def see_bdd_actions():
     result = cur.fetchall()
     # print(result)
     return result
+
+
+def see_bdd_of_specific_user(username):
+    """ Afficher la base de donnée
+    Le résultat peut être print en interne pour visualisé la table
+
+    :return
+    String
+        Le résultat de la requête
+    """
+
+    con = sqlite3.connect("database/plateformeTraiding.db")
+    cur = con.cursor()
+    cur.execute("select * from client_table where client_username=?",
+                [username])
+    result = cur.fetchall()
+    return result
+
+
+def add_money_for_user(username, money: int):
+    con = sqlite3.connect("database/plateformeTraiding.db")
+    cur = con.cursor()
+    cur.execute("update client_table set client_capital=client_capital + ?"
+                " where client_username=?",
+                (money, username))
+    con.commit()
+    con.close()
